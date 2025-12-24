@@ -78,7 +78,8 @@ function LoginForm() {
                 if (error) {
                     setError(error.message)
                 } else {
-                    setMessage("Check your email for a confirmation link!")
+                    // Auto-login after signup (email verification disabled)
+                    window.location.href = redirect
                 }
             } else {
                 const { error } = await signIn(email, password)
