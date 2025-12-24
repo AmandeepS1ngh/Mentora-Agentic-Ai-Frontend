@@ -8,6 +8,7 @@ import { AppHeader } from "@/components/AppHeader"
 import { MarkdownText } from "@/components/ui/markdown-text"
 import { FlashcardDeck } from "@/components/ui/flashcard-deck"
 import { Quiz } from "@/components/ui/quiz"
+import { useAuth } from "@/context/auth-context"
 
 // API Configuration - change this to your backend URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_RAG_API_URL || "https://mentoraagenticairag-backend.onrender.com"
@@ -44,6 +45,7 @@ interface UploadedDocument {
 }
 
 export function RAGInterface() {
+  const { session, loading: authLoading } = useAuth()
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -72,6 +74,11 @@ export function RAGInterface() {
       return
     }
 
+    if (!session?.access_token) {
+      setError("Please sign in to upload documents")
+      return
+    }
+
     setIsUploading(true)
     setError("")
     setUploadProgress("Uploading document...")
@@ -84,6 +91,9 @@ export function RAGInterface() {
 
       const response = await fetch(`${API_BASE_URL}/ingest`, {
         method: "POST",
+        headers: {
+          "Authorization": `Bearer ${session.access_token}`,
+        },
         body: formData,
       })
 
@@ -128,7 +138,7 @@ export function RAGInterface() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if (!input.trim() || isLoading || !session?.access_token) return
 
     const userMessage: Message = { role: "user", content: input }
     setMessages((prev) => [...prev, userMessage])
@@ -150,6 +160,7 @@ export function RAGInterface() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           question: input,

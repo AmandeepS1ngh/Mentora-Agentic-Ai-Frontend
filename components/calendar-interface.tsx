@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import {
     Calendar,
@@ -43,15 +44,13 @@ import { SummaryPanel } from "@/components/summary-panel"
 import { AppHeader } from "@/components/AppHeader"
 import { cn } from "@/lib/utils"
 import { MarkdownText } from "@/components/ui/markdown-text"
+import { useAuth } from "@/context/auth-context"
 
 // API Configuration - change this to your backend URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_CALENDAR_API_URL || "https://mentora-calendaragent-backend.onrender.com"
 
 // Get user timezone
 const USER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
-
-// Demo user ID (in production, this comes from auth)
-const USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 interface Task {
     id: string
@@ -95,6 +94,8 @@ interface Summary {
 }
 
 export function CalendarInterface() {
+    const { user, session, loading: authLoading } = useAuth()
+    const router = useRouter()
     const [tasks, setTasks] = useState<Task[]>([])
     const [stats, setStats] = useState<TaskStats | null>(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -143,10 +144,14 @@ export function CalendarInterface() {
 
     // Fetch tasks on load and tab change
     useEffect(() => {
-        fetchTasks()
-    }, [activeTab])
+        if (!authLoading && session) {
+            fetchTasks()
+        }
+    }, [activeTab, authLoading, session])
 
     const fetchTasks = async () => {
+        if (!session?.access_token) return
+
         setIsLoading(true)
         setError("")
 
@@ -156,7 +161,7 @@ export function CalendarInterface() {
                 `${API_BASE_URL}/calendar/tasks/${endpoint}?timezone=${encodeURIComponent(USER_TIMEZONE)}`,
                 {
                     headers: {
-                        "X-User-Id": USER_ID,
+                        "Authorization": `Bearer ${session.access_token}`,
                     },
                 }
             )
@@ -184,12 +189,14 @@ export function CalendarInterface() {
         description: string
         deadline: string
     }) => {
+        if (!session?.access_token) return
+
         try {
             const response = await fetch(`${API_BASE_URL}/calendar/tasks`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-User-Id": USER_ID,
+                    "Authorization": `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({
                     ...taskData,
@@ -213,6 +220,8 @@ export function CalendarInterface() {
     }
 
     const handleUpdateStatus = async (taskId: string, newStatus: string) => {
+        if (!session?.access_token) return
+
         try {
             const response = await fetch(
                 `${API_BASE_URL}/calendar/tasks/${taskId}/status`,
@@ -220,7 +229,7 @@ export function CalendarInterface() {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-User-Id": USER_ID,
+                        "Authorization": `Bearer ${session.access_token}`,
                     },
                     body: JSON.stringify({ status: newStatus }),
                 }
@@ -241,6 +250,8 @@ export function CalendarInterface() {
     }
 
     const handleSync = async () => {
+        if (!session?.access_token) return
+
         setIsSyncing(true)
         setError("")
 
@@ -249,7 +260,7 @@ export function CalendarInterface() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-User-Id": USER_ID,
+                    "Authorization": `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({ syncToTasks: true }),
             })
@@ -271,6 +282,8 @@ export function CalendarInterface() {
     }
 
     const handleGenerateSummary = async () => {
+        if (!session?.access_token) return
+
         setIsSummaryLoading(true)
         setError("")
 
@@ -282,7 +295,7 @@ export function CalendarInterface() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-User-Id": USER_ID,
+                        "Authorization": `Bearer ${session.access_token}`,
                     },
                     body: JSON.stringify({ timezone: USER_TIMEZONE }),
                 }
@@ -304,11 +317,13 @@ export function CalendarInterface() {
     }
 
     const handleConnectGoogle = async () => {
+        if (!session?.access_token) return
+
         try {
             const response = await fetch(`${API_BASE_URL}/calendar/connect-google`, {
                 method: "POST",
                 headers: {
-                    "X-User-Id": USER_ID,
+                    "Authorization": `Bearer ${session.access_token}`,
                 },
             })
 
