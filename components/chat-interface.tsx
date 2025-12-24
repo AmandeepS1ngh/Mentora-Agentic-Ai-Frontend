@@ -4,11 +4,11 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Send, Loader2, Sparkles, Calendar } from "lucide-react"
+import { useAuth } from "@/context/auth-context"
 
 // API Configuration
 const API_BASE_URL = process.env.NEXT_PUBLIC_CALENDAR_API_URL || "https://mentora-calendaragent-backend.onrender.com"
 const USER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
-const USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 interface Message {
     role: "user" | "assistant"
@@ -22,6 +22,7 @@ interface ChatInterfaceProps {
 }
 
 export function ChatInterface({ onTaskCreated }: ChatInterfaceProps) {
+    const { session, loading: authLoading } = useAuth()
     const [messages, setMessages] = useState<Message[]>([
         {
             role: "assistant",
@@ -43,7 +44,7 @@ export function ChatInterface({ onTaskCreated }: ChatInterfaceProps) {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!input.trim() || isLoading) return
+        if (!input.trim() || isLoading || !session?.access_token) return
 
         const userMessage: Message = { role: "user", content: input }
         setMessages((prev) => [...prev, userMessage])
@@ -55,7 +56,7 @@ export function ChatInterface({ onTaskCreated }: ChatInterfaceProps) {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-User-Id": USER_ID,
+                    "Authorization": `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({
                     message: input,

@@ -8,11 +8,11 @@ import Link from "next/link"
 import { AppHeader } from "@/components/AppHeader"
 import { cn } from "@/lib/utils"
 import { MarkdownText } from "@/components/ui/markdown-text"
+import { useAuth } from "@/context/auth-context"
 
 // API Configuration - uses environment variable or deployed Render URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_CALENDAR_API_URL || "https://mentora-calendaragent-backend.onrender.com"
 const USER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
-const USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 interface Message {
     role: "user" | "assistant"
@@ -23,6 +23,7 @@ interface Message {
 }
 
 export function AIChatInterface() {
+    const { session, loading: authLoading } = useAuth()
     const [messages, setMessages] = useState<Message[]>([
         {
             role: "assistant",
@@ -51,7 +52,7 @@ export function AIChatInterface() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        if (!input.trim() || isLoading) return
+        if (!input.trim() || isLoading || !session?.access_token) return
 
         const userMessage: Message = {
             role: "user",
@@ -76,7 +77,7 @@ export function AIChatInterface() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "X-User-Id": USER_ID,
+                    "Authorization": `Bearer ${session.access_token}`,
                 },
                 body: JSON.stringify({
                     message: input,
