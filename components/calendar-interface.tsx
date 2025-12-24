@@ -43,14 +43,15 @@ import { SummaryPanel } from "@/components/summary-panel"
 import { AppHeader } from "@/components/AppHeader"
 import { cn } from "@/lib/utils"
 import { MarkdownText } from "@/components/ui/markdown-text"
-import { createClient } from "@/lib/supabase"
-import type { Session } from "@supabase/supabase-js"
 
 // API Configuration - change this to your backend URL
 const API_BASE_URL = process.env.NEXT_PUBLIC_CALENDAR_API_URL || "https://mentora-calendaragent-backend.onrender.com"
 
 // Get user timezone
 const USER_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone
+
+// Demo user ID (in production, this comes from auth)
+const USER_ID = "550e8400-e29b-41d4-a716-446655440000"
 
 interface Task {
     id: string
@@ -106,32 +107,10 @@ export function CalendarInterface() {
     const [expandedTaskId, setExpandedTaskId] = useState<string | null>(null)
     const [isGoogleConnected, setIsGoogleConnected] = useState(false)
 
-    // Auth State
-    const [session, setSession] = useState<Session | null>(null)
-    const [isAuthLoading, setIsAuthLoading] = useState(true)
-    const supabase = createClient()
-
     // Calendar State
     const [currentDate, setCurrentDate] = useState(new Date())
     const [selectedDate, setSelectedDate] = useState(new Date())
     const [view, setView] = useState<"week" | "month">("month")
-
-    useEffect(() => {
-        const getSession = async () => {
-            const { data: { session } } = await supabase.auth.getSession()
-            setSession(session)
-            setIsAuthLoading(false)
-        }
-
-        getSession()
-
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session)
-            setIsAuthLoading(false)
-        })
-
-        return () => subscription.unsubscribe()
-    }, [supabase])
 
     // Calendar Logic
     const nextPeriod = () => {
@@ -164,13 +143,10 @@ export function CalendarInterface() {
 
     // Fetch tasks on load and tab change
     useEffect(() => {
-        if (session) {
-            fetchTasks()
-        }
-    }, [activeTab, session])
+        fetchTasks()
+    }, [activeTab])
 
     const fetchTasks = async () => {
-        if (!session) return;
         setIsLoading(true)
         setError("")
 
@@ -180,7 +156,7 @@ export function CalendarInterface() {
                 `${API_BASE_URL}/calendar/tasks/${endpoint}?timezone=${encodeURIComponent(USER_TIMEZONE)}`,
                 {
                     headers: {
-                        "Authorization": `Bearer ${session.access_token}`,
+                        "X-User-Id": USER_ID,
                     },
                 }
             )
@@ -208,13 +184,12 @@ export function CalendarInterface() {
         description: string
         deadline: string
     }) => {
-        if (!session) return;
         try {
             const response = await fetch(`${API_BASE_URL}/calendar/tasks`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session.access_token}`,
+                    "X-User-Id": USER_ID,
                 },
                 body: JSON.stringify({
                     ...taskData,
@@ -238,7 +213,6 @@ export function CalendarInterface() {
     }
 
     const handleUpdateStatus = async (taskId: string, newStatus: string) => {
-        if (!session) return;
         try {
             const response = await fetch(
                 `${API_BASE_URL}/calendar/tasks/${taskId}/status`,
@@ -246,7 +220,7 @@ export function CalendarInterface() {
                     method: "PATCH",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${session.access_token}`,
+                        "X-User-Id": USER_ID,
                     },
                     body: JSON.stringify({ status: newStatus }),
                 }
@@ -267,7 +241,6 @@ export function CalendarInterface() {
     }
 
     const handleSync = async () => {
-        if (!session) return;
         setIsSyncing(true)
         setError("")
 
@@ -276,7 +249,7 @@ export function CalendarInterface() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${session.access_token}`,
+                    "X-User-Id": USER_ID,
                 },
                 body: JSON.stringify({ syncToTasks: true }),
             })
@@ -298,7 +271,6 @@ export function CalendarInterface() {
     }
 
     const handleGenerateSummary = async () => {
-        if (!session) return;
         setIsSummaryLoading(true)
         setError("")
 
@@ -310,7 +282,7 @@ export function CalendarInterface() {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${session.access_token}`,
+                        "X-User-Id": USER_ID,
                     },
                     body: JSON.stringify({ timezone: USER_TIMEZONE }),
                 }
@@ -332,12 +304,11 @@ export function CalendarInterface() {
     }
 
     const handleConnectGoogle = async () => {
-        if (!session) return;
         try {
             const response = await fetch(`${API_BASE_URL}/calendar/connect-google`, {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${session.access_token}`,
+                    "X-User-Id": USER_ID,
                 },
             })
 
@@ -381,38 +352,6 @@ export function CalendarInterface() {
             default:
                 return <AlertCircle className="h-4 w-4" />
         }
-    }
-
-    if (isAuthLoading) {
-        return (
-            <div className="flex h-screen items-center justify-center bg-background">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        )
-    }
-
-    if (!session) {
-        return (
-            <div className="flex min-h-screen flex-col bg-background">
-                <AppHeader maxWidth="6xl" />
-                <main className="flex-1 flex items-center justify-center p-6">
-                    <div className="max-w-md w-full text-center space-y-6">
-                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
-                            <Calendar className="h-8 w-8 text-primary" />
-                        </div>
-                        <div className="space-y-2">
-                            <h2 className="text-2xl font-bold tracking-tight">Sign in required</h2>
-                            <p className="text-muted-foreground">
-                                Please sign in to your Mentora account to access your calendar and tasks.
-                            </p>
-                        </div>
-                        <Button className="w-full" size="lg" asChild>
-                            <Link href="/auth">Sign In</Link>
-                        </Button>
-                    </div>
-                </main>
-            </div>
-        )
     }
 
     return (
