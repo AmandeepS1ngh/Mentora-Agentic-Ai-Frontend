@@ -29,48 +29,45 @@ const steps = [
 
 export function HowItWorksSection() {
     return (
-        <section className="py-24 px-6 border-y border-border/50">
+        <section className="py-32 px-6 bg-secondary/20 border-y border-border/30">
             <div className="max-w-6xl mx-auto">
                 {/* Section Header */}
-                <div className="text-center mb-16">
-                    <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
-                        How It Works
+                <div className="text-center mb-20">
+                    <span className="inline-block text-sm font-semibold text-primary uppercase tracking-wider mb-4">How It Works</span>
+                    <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
+                        Start in Minutes
                     </h2>
-                    <p className="text-muted-foreground max-w-2xl mx-auto">
-                        Get started in minutes with a simple, intuitive workflow.
+                    <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+                        A simple, intuitive workflow designed to maximize your learning efficiency.
                     </p>
                 </div>
 
                 {/* Steps */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {steps.map((item, index) => (
-                        <div key={index} className="relative">
-                            {/* Connector line (hidden on last item and mobile) */}
+                        <div key={index} className="relative text-center">
+                            {/* Connector line */}
                             {index < steps.length - 1 && (
-                                <div className="hidden lg:block absolute top-6 left-[calc(50%+1.5rem)] w-[calc(100%-3rem)] h-px bg-border/50" />
+                                <div className="hidden lg:block absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px bg-gradient-to-r from-primary/30 to-transparent" />
                             )}
 
-                            <div className="text-center">
-                                {/* Step Icon */}
-                                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/20 mb-4">
-                                    <item.icon className="w-5 h-5 text-primary" />
-                                </div>
-
-                                {/* Step Label */}
-                                <div className="text-xs font-mono text-primary mb-2">
-                                    STEP {item.step}
-                                </div>
-
-                                {/* Title */}
-                                <h3 className="text-lg font-semibold text-foreground mb-2">
-                                    {item.title}
-                                </h3>
-
-                                {/* Description */}
-                                <p className="text-sm text-muted-foreground">
-                                    {item.description}
-                                </p>
+                            {/* Step Number Badge */}
+                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-card border border-border/50 mb-6 relative">
+                                <item.icon className="w-7 h-7 text-primary" />
+                                <span className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs font-bold flex items-center justify-center">
+                                    {item.step}
+                                </span>
                             </div>
+
+                            {/* Title */}
+                            <h3 className="text-lg font-bold text-foreground mb-3">
+                                {item.title}
+                            </h3>
+
+                            {/* Description */}
+                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                {item.description}
+                            </p>
                         </div>
                     ))}
                 </div>
