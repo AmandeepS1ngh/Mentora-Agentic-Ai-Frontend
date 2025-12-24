@@ -26,7 +26,7 @@ function LoginForm() {
     // Redirect if already logged in
     useEffect(() => {
         if (!authLoading && user) {
-            router.push(redirect)
+            router.replace(redirect)
         }
     }, [user, authLoading, router, redirect])
 
@@ -85,7 +85,8 @@ function LoginForm() {
                 if (error) {
                     setError(error.message)
                 } else {
-                    router.push(redirect)
+                    // Use hard navigation for reliable redirect after login
+                    window.location.href = redirect
                 }
             }
         } catch {
