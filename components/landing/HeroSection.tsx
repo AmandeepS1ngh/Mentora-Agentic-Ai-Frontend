@@ -3,7 +3,7 @@ import { ArrowRight, FileSearch, Calendar, BookOpen, Brain, Sparkles, CheckCircl
 
 export function HeroSection() {
     return (
-        <section className="relative pt-24 pb-20 px-6 overflow-hidden">
+        <section className="relative pt-8 pb-20 px-6 overflow-hidden">
             {/* Background Gradients */}
             <div className="absolute inset-0 pointer-events-none">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/8 rounded-full blur-[150px]" />
