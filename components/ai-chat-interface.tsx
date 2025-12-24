@@ -24,14 +24,7 @@ interface Message {
 
 export function AIChatInterface() {
     const { session, loading: authLoading } = useAuth()
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            role: "assistant",
-            content: "👋 **Hello! I'm your Task Assistant.**\n\nI turn your natural language into organized tasks.\n\n**Try saying:**\n\n📚 \"Study React hooks tomorrow at 7pm for 2 hours\"\n\n📝 \"Complete project report next Monday by 3pm\"\n\nJust type what you need to do!",
-            type: "general",
-            timestamp: new Date()
-        }
-    ])
+    const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -46,7 +39,15 @@ export function AIChatInterface() {
     }, [messages])
 
     useEffect(() => {
-        // Focus input on mount
+        // Initialize welcome message and focus input on mount
+        setMessages([
+            {
+                role: "assistant",
+                content: "👋 **Hello! I'm your Task Assistant.**\n\nI turn your natural language into organized tasks.\n\n**Try saying:**\n\n📚 \"Study React hooks tomorrow at 7pm for 2 hours\"\n\n📝 \"Complete project report next Monday by 3pm\"\n\nJust type what you need to do!",
+                type: "general",
+                timestamp: new Date()
+            }
+        ])
         inputRef.current?.focus()
     }, [])
 

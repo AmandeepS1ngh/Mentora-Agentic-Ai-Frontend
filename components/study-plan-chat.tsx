@@ -173,19 +173,26 @@ function PlanCard({ plan, planId, onApply, isApplying }: PlanCardProps) {
 
 export function StudyPlanChat() {
     const { session, loading: authLoading } = useAuth()
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            role: "assistant",
-            content: "👋 **Welcome to your AI Study Partner!**\n\nI design personalized study schedules based on your goals.\n\n**Try asking:**\n\n📚 \"Prepare for DSA interviews in 4 weeks, 2 hours/day\"\n\n💻 \"Learn Next.js basics in 2 weeks, 1.5 hours daily\"\n\nTell me your goal and timeline!",
-            type: "general",
-            timestamp: new Date()
-        }
-    ])
+    const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [isApplying, setIsApplying] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
+    const [mounted, setMounted] = useState(false)
+
+    // Initialize messages after mount to avoid hydration mismatch
+    useEffect(() => {
+        setMounted(true)
+        setMessages([
+            {
+                role: "assistant",
+                content: "👋 **Welcome to your AI Study Partner!**\n\nI design personalized study schedules based on your goals.\n\n**Try asking:**\n\n📚 \"Prepare for DSA interviews in 4 weeks, 2 hours/day\"\n\n💻 \"Learn Next.js basics in 2 weeks, 1.5 hours daily\"\n\nTell me your goal and timeline!",
+                type: "general",
+                timestamp: new Date()
+            }
+        ])
+    }, [])
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
