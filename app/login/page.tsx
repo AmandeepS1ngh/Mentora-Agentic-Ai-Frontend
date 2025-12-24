@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense, useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/context/auth-context"
 import { Button } from "@/components/ui/button"
@@ -18,10 +18,41 @@ function LoginForm() {
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState("")
 
-    const { signIn, signUp } = useAuth()
+    const { user, loading: authLoading, signIn, signUp } = useAuth()
     const router = useRouter()
     const searchParams = useSearchParams()
     const redirect = searchParams.get("redirect") || "/dashboard"
+
+    // Redirect if already logged in
+    useEffect(() => {
+        if (!authLoading && user) {
+            router.push(redirect)
+        }
+    }, [user, authLoading, router, redirect])
+
+    // Show loading while checking auth
+    if (authLoading) {
+        return (
+            <div className="w-full max-w-md flex items-center justify-center min-h-[400px]">
+                <div className="flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="text-muted-foreground">Loading...</span>
+                </div>
+            </div>
+        )
+    }
+
+    // Don't render form if user is logged in (will redirect)
+    if (user) {
+        return (
+            <div className="w-full max-w-md flex items-center justify-center min-h-[400px]">
+                <div className="flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <span className="text-muted-foreground">Redirecting...</span>
+                </div>
+            </div>
+        )
+    }
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
